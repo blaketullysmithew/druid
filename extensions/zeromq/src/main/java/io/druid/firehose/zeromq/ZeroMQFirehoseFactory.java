@@ -112,12 +112,12 @@ public class ZeroMQFirehoseFactory implements FirehoseFactory<StringInputRowPars
         try {
           // Wait for the next data. This will block until something is available.
           // Use trim to remove the trailing '0'
-          data = subscriber.recvStr(0).trim()
-          if (data != null) {
+          data = subscriber.recvStr(0).trim();
+          if (!data.equals("")) {
             return true;
           }
         }
-        catch (InterruptedException e) {
+        catch (RuntimeException e) {
           // A little unclear on how we should handle this.
 
           // At any rate, we're in an unknown state now so let's log something and return false.
@@ -140,7 +140,7 @@ public class ZeroMQFirehoseFactory implements FirehoseFactory<StringInputRowPars
 
         // TODO: we may need to adjust the format of the string to be something that can be used by the
         // StringInputRowParser this assumes the raw queue data is in the format that StringInputRowParser likes
-        return stringParser.parse(StringUtils.fromUtf8(data));
+        return stringParser.parse(StringUtils.fromUtf8(data.getBytes()));
       }
 
       @Override
