@@ -32,20 +32,23 @@ public class ZeroMQFirehoseConfig
 
   public static ZeroMQFirehoseConfig makeDefaultConfig()
   {
-    return new ZeroMQFirehoseConfig("data", "tcp://localhost:5556");
+    return new ZeroMQFirehoseConfig("data", "tcp://localhost:5556", "");
   }
 
   private final String uri;
   private final String filter;
+  private final String field_map;
 
   @JsonCreator
   public ZeroMQFirehoseConfig(
       @JsonProperty("filter") String filter,
-      @JsonProperty("uri") String uri
+      @JsonProperty("uri") String uri,
+      @JsonProperty("field_map") String field_map
   )
   {
     this.filter = filter;
     this.uri = uri;
+    this.field_map = field_map;
   }
 
   @JsonProperty
@@ -58,6 +61,12 @@ public class ZeroMQFirehoseConfig
   public String getUri()
   {
     return uri;
+  }
+
+  @JsonProperty
+  public String getFieldMap()
+  {
+    return field_map;
   }
 
   @Override
@@ -78,6 +87,9 @@ public class ZeroMQFirehoseConfig
     if (uri != that.uri) {
       return false;
     }
+    if (field_map != that.field_map) {
+      return false;
+    }
 
     return true;
   }
@@ -87,6 +99,7 @@ public class ZeroMQFirehoseConfig
   {
     int result = uri != null ? uri.hashCode() : 0;
     result = 31 * result + (filter != null ? filter.hashCode() : 0);
+    result = 31 * result + (field_map != null ? field_map.hashCode() : 0);
     return result;
   }
 }
