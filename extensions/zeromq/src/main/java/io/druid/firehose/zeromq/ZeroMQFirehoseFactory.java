@@ -34,11 +34,9 @@ import io.druid.data.input.Firehose;
 import io.druid.data.input.FirehoseFactory;
 import io.druid.data.input.InputRow;
 import io.druid.data.input.impl.StringInputRowParser;
-import jdk.nashorn.internal.parser.JSONParser;
 
 import java.io.*;
 import java.nio.charset.*;
-import java.nio.file.*;
 import java.util.*;
 
 /**
@@ -185,41 +183,7 @@ public class ZeroMQFirehoseFactory implements FirehoseFactory<StringInputRowPars
   @Override
   public Firehose connect(StringInputRowParser firehoseParser) throws IOException
   {
-    Map<String, String> rekeyMap = new HashMap<String, String>();
-
-    if (!config.getFieldMap().isEmpty())
-    {
-      File fieldMapFile = new File(config.getFieldMap());
-
-      byte[] encoded = Files.readAllBytes(Paths.get(config.getFieldMap()));
-      String fieldMapString = new String(encoded, Charset.defaultCharset());
-
-      Map<String, Object> fieldMap = parseFieldMap(fieldMapString);
-
-      for (String key : fieldMap.keySet())
-      {
-        Object fieldObj = fieldMap.get(key);
-
-        if (fieldObj instanceof Map)
-        {
-          try
-          {
-            Map<String, Object> field = (Map<String, Object>) fieldObj;
-            rekeyMap.put(key, (String)field.get("name"));
-          }
-          catch(ClassCastException ignore)
-          {
-            // Bad format? ignore
-          }
-        }
-      }
-    }
-
-    final RekeyStringInputRowParser rekeyStringParser = new RekeyStringInputRowParser(
-       firehoseParser.getParseSpec(),
-       rekeyMap
-    );
-
+    final StringInputRowParser stringParser = firehoseParser;
     context = ZMQ.context(1);
     subscriber = context.socket(ZMQ.SUB);
     subscriber.connect(config.getUri());
@@ -236,9 +200,15 @@ public class ZeroMQFirehoseFactory implements FirehoseFactory<StringInputRowPars
         try {
           // Gets the entire message, including all frames
           ZMsg msg = ZMsg.recvMsg(subscriber);
-          ZFrame lastFrame = msg.getLast();
+          int currentFrame = 0;
 
-          data = lastFrame.toString();
+          for (ZFrame frame : msg)
+          {
+            if (currentFrame > 0)
+              data += frame.toString();
+
+            currentFrame++;
+          }
 
           if (!data.equals("")) {
             return true;
@@ -265,7 +235,7 @@ public class ZeroMQFirehoseFactory implements FirehoseFactory<StringInputRowPars
           return null;
         }
 
-        return rekeyStringParser.parse(StringUtils.fromUtf8(data.getBytes()));
+        return stringParser.parse(StringUtils.fromUtf8(data.getBytes()));
       }
 
       @Override

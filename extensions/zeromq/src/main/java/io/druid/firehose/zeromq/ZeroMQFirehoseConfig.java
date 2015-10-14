@@ -25,30 +25,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class ZeroMQFirehoseConfig
 {
-  // Lyra (auto reconnect) properties
-  private static final int defaultMaxRetries = 100;
-  private static final int defaultRetryIntervalSeconds = 2;
-  private static final long defaultMaxDurationSeconds = 5 * 60;
-
   public static ZeroMQFirehoseConfig makeDefaultConfig()
   {
-    return new ZeroMQFirehoseConfig("data", "tcp://localhost:5556", "");
+    return new ZeroMQFirehoseConfig("data", "tcp://localhost:5556");
   }
 
   private final String uri;
   private final String filter;
-  private final String field_map;
 
   @JsonCreator
   public ZeroMQFirehoseConfig(
       @JsonProperty("filter") String filter,
-      @JsonProperty("uri") String uri,
-      @JsonProperty("field_map") String field_map
+      @JsonProperty("uri") String uri
   )
   {
     this.filter = filter;
     this.uri = uri;
-    this.field_map = field_map;
   }
 
   @JsonProperty
@@ -63,12 +55,6 @@ public class ZeroMQFirehoseConfig
     return uri;
   }
 
-  @JsonProperty
-  public String getFieldMap()
-  {
-    return field_map;
-  }
-
   @Override
   public boolean equals(Object o)
   {
@@ -81,13 +67,10 @@ public class ZeroMQFirehoseConfig
 
     ZeroMQFirehoseConfig that = (ZeroMQFirehoseConfig) o;
 
-    if (filter != that.filter) {
+    if (!filter.equals(that.filter)) {
       return false;
     }
-    if (uri != that.uri) {
-      return false;
-    }
-    if (field_map != that.field_map) {
+    if (!uri.equals(that.uri)) {
       return false;
     }
 
@@ -99,7 +82,6 @@ public class ZeroMQFirehoseConfig
   {
     int result = uri != null ? uri.hashCode() : 0;
     result = 31 * result + (filter != null ? filter.hashCode() : 0);
-    result = 31 * result + (field_map != null ? field_map.hashCode() : 0);
     return result;
   }
 }
